@@ -1,0 +1,39 @@
+data {
+  int<lower=1> N;
+  matrix[N, 2] x;
+  matrix[N, 2] errx;
+}
+
+
+parameters {
+  vector[2] mu;
+  real<lower=0> sigma[2];
+  real<lower=-1, upper=1> rho;
+  matrix[N, 2] xreal;
+}
+
+
+transformed parameters {
+  cov_matrix[2] cov = 
+  [[sigma[1]^ 2, sigma[1]*sigma[2]*rho],
+  [sigma[1]*sigma[2]* rho, sigma[2]^2]];
+}
+
+
+model {
+  for (i in 1:N){
+    x[i,1] ~ normal(xreal[i,1], errx[i,1]);
+    x[i,2] ~ normal(xreal[i,2], errx[i,2]);
+  }
+    
+  for (i in 1:N)
+    xreal[i] ~ multi_normal(mu, cov);
+  sigma ~ cauchy(0., 10.);
+  mu ~ normal(0., 100.);
+}
+
+
+generated quantities {
+  vector[2] mockx;
+  mockx = multi_normal_rng(mu, cov);
+} 
