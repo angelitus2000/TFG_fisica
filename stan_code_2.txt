@@ -1,0 +1,33 @@
+data {
+  int<lower=1> N;
+  vector[2] x[N];
+}
+
+
+parameters {
+  vector[2] mu;
+  real<lower=0> sigma[2];
+  real<lower=-1, upper=1> rho;
+  real<lower=1> nu;
+}
+
+
+transformed parameters {
+  cov_matrix[2] cov = 
+  [[sigma[1]^ 2, sigma[1]*sigma[2]*rho],
+  [sigma[1]*sigma[2]* rho, sigma[2]^2]];
+}
+
+
+model {
+  x ~ multi_student_t(nu, mu, cov);
+  sigma ~ cauchy(0., 10.);
+  mu ~ normal(0., 100.);
+  nu ~ gamma(2, 0.1);
+}
+
+
+generated quantities {
+  vector[2] mockx;
+  mockx = multi_student_t_rng(nu, mu, cov);
+}
